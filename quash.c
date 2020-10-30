@@ -64,7 +64,7 @@ void empty_cmd_buffer()
 }
 
 //********************
-//Feature 4. exit and quit work properly (5)
+//Feature 4. exit and quit work properly (5
 //We might need special exit and quit functions to handle these later. These (I assume) can be called via the input.txt files
 void quit_cmd()
 {
