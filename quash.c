@@ -80,7 +80,7 @@ void exit_cmd()
 //the cd command will do... something, I guess. Maybe it effects the enviorment the code is running on?
 void cd_cmd(char* input)
 {
-	printf("in cd\n");
+	printf("in cd.. input is: %s\n", input);
 	if (input != NULL) {
         if (chdir(input) == -1) {
         	printf("No such file or directory");
@@ -88,9 +88,10 @@ void cd_cmd(char* input)
         dir = getcwd(NULL, 1024);
     } else {
 		printf("changed to home");
-      chdir(getenv("HOME"));
-      dir = getcwd(NULL, 1024);
+      	chdir(getenv("HOME"));
+      	dir = getcwd(NULL, 1024);
     }
+	// chdir(input);
 }
 
 //********************
@@ -221,7 +222,7 @@ int main(int argc, char **argv, char **envp)
 		printf("\nquash -> ");
 
 		fgets(input, sizeof(input), stdin);
-		// input[strcspn(input, "\n")] = '\0'; // remove extra char fgets contributes
+		input[strcspn(input, "\n")] = '\0'; // remove extra char fgets contributes
 		
 		// parse_input(input); // break the input into an array?
 		handle_input(input); // run the commands in the 2d array
