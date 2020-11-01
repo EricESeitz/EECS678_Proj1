@@ -65,18 +65,6 @@ void read_txt(char c)
 }
 
 //********************
-//Feature 4. exit and quit work properly (5
-//We might need special exit and quit functions to handle these later. These (I assume) can be called via the input.txt files
-void quit_cmd()
-{
-
-}
-void exit_cmd()
-{
-
-}
-
-//********************
 //Feature 5. cd (with and without arguments) works properly (5)
 //the cd command will do... something, I guess. Maybe it effects the enviorment the code is running on?
 void cd_cmd(char* input)
@@ -351,10 +339,19 @@ void handle_input(char* input) {
 			exit(0);
 			
 		}
+		else if(filedir_in != NULL) {
+			//For file redirection, input
+			return;
+		}
+		else if(filedir_out != NULL) {
+			//For file redirection, output
+			return;
+		}
 		else if(cd_proc != NULL) {
 			cd_cmd(strtok(NULL, s)); // parameter is grabbing an argument(if there is any)
 			return;
 		} 
+		//Feature 4. exit and quit work properly (5)
 		else if (exit_proc != NULL || quit_proc != NULL) 
 		{
 			printf("exiting current scope\n");
