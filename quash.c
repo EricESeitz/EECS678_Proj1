@@ -86,10 +86,11 @@ void cd_cmd(char* input)
         	printf("No such file or directory");
         }
         dir = getcwd(NULL, 1024);
+		printf("%s", dir);
     } else {
-		printf("changed to home");
       	chdir(getenv("HOME"));
       	dir = getcwd(NULL, 1024);
+		printf("%s", dir);
     }
 	// chdir(input);
 }
