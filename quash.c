@@ -275,7 +275,6 @@ void handle_input(char* input) {
 		}
 		else if (is_pipe != NULL) 
 		{
-			//**********************
 			//This will be where we pipe processes
 			char* part = strtok(orig_input, "|\0");
 			char* first_cmd = part;
@@ -291,13 +290,13 @@ void handle_input(char* input) {
 			pipe(spipe);
 			pid_t pid;
 			pid_t pid2;
-			first_cmd = clean_str(first_cmd);
+			first_cmd = clean_str(first_cmd); //cleans possible extra whitespaces
 			second_cmd = clean_str(second_cmd);
 			
 			pid = fork();
 			if (pid == 0) {
 			    dup2(spipe[1], STDOUT_FILENO);
-			    handle_input(first_cmd); //cleans whitespaces
+			    handle_input(first_cmd); 
 			    close(spipe[0]);
 			    close(spipe[1]);
 			    exit(0);
@@ -306,7 +305,7 @@ void handle_input(char* input) {
 			pid2 = fork();
 			if (pid2 == 0) {
 			    dup2(spipe[0], STDIN_FILENO);
-			    handle_input(second_cmd); //cleans whitespaces
+			    handle_input(second_cmd); 
 			    close(spipe[0]);
 			    close(spipe[1]);
 			    exit(0);
