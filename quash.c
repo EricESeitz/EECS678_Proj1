@@ -115,34 +115,78 @@ void kill_cmd()
 }
 
 //Executes a list of commands, piping each to the next successively.
-void execute_cmd()
+void execute_cmd(char* input)
 {
-	//Let's try executing the code first
-	printf("execute cmd_buffer: %s \n", cmd_buffer);
-	printf("\n");
+	printf("trying to execute a command\n");
+	const char s[2] = " ";
+	char* token;
+	token = strtok(input, s); //first command before a space
+
+	char command[100];
+	int i = 0;
+
+	//parse / gather commands -- this is assuming there is no | (pipe)
+	// while(token != NULL) {
+	// 	command[i] = token;
+	// 	token = strtok(NULL, s);
+	// 	i++;
+	// }
 	
-	char program[100];
-	strcpy(program, cmd_buffer);
+	// for(int i = 0; i < 100; i++) {
+	// 	for (int j = 0; j < 100; j++)
+	// 	{
+	// 		printf("%s",command[i][j]);
+	// 	}
+		
+	// }
+
+	const char *options[2] = { "ls", "-la" };
+
+
+
+	// try to run the command
+	pid_t pid;
+	int stat;
+	pid = fork();
+	if(pid == 0) {
+		printf("running ls\n");
+		execlp(options[0],options[0],options[1], NULL);
+		exit(0);
+	}
+	else {
+		printf("else block\n");
+		waitpid(pid, &stat, 0);
+		if(stat == 1) {
+			fprintf(stderr, "%s\n", "ERROR : in execute_cmd()");
+		}
+	}
+
+	// //Let's try executing the code first
+	// printf("execute cmd_buffer: %s \n", cmd_buffer);
+	// printf("\n");
 	
-	printf("Program: %s \n", program);
-	char *args[] = {"uname", (char *)0 }; //was program, hard coded for testing.
-	char *env_args[] = {"PATH=/bin", (char*)0};
+	// char program[100];
+	// strcpy(program, cmd_buffer);
 	
-	//******************** This is still erroring out. This should execute the first part of args. 
-	//The first place of args will be the program NAME (such as uname, quit, etc). Any places AFTER the name will be arguments. Like '-c -q -ww' etc.
-	//So theoretically here we can issue the command "programName -l -c -ww" to the enviorments defined in env_args
-	//This will set us up with features 1 and 2 on the main PDF. Running commands w/ and w/o arguments
-	execve(args[0], args, env_args);
-    	fprintf(stderr, "Error on execve!\n");
+	// printf("Program: %s \n", program);
+	// char *args[] = {"uname", (char *)0 }; //was program, hard coded for testing.
+	// char *env_args[] = {"PATH=/bin", (char*)0};
+	
+	// //******************** This is still erroring out. This should execute the first part of args. 
+	// //The first place of args will be the program NAME (such as uname, quit, etc). Any places AFTER the name will be arguments. Like '-c -q -ww' etc.
+	// //So theoretically here we can issue the command "programName -l -c -ww" to the enviorments defined in env_args
+	// //This will set us up with features 1 and 2 on the main PDF. Running commands w/ and w/o arguments
+	// execve(args[0], args, env_args);
+    // 	fprintf(stderr, "Error on execve!\n");
     	
-    	//********************
-    	//Feature 7. Child processes inherit the environment (5)
-    	//When we get to piping (which will probably happen here I assume), child inheritance will need to be built in.
+    // 	//********************
+    // 	//Feature 7. Child processes inherit the environment (5)
+    // 	//When we get to piping (which will probably happen here I assume), child inheritance will need to be built in.
     	
-    	//Feature 11. Allow (1) pipe (|) (10)
-    	//This MIGHT end up being executed here along with the other child/parent stuff. 
+    // 	//Feature 11. Allow (1) pipe (|) (10)
+    // 	//This MIGHT end up being executed here along with the other child/parent stuff. 
     	
-    	//BONUS POINT (NOT REQUIRED): Support multiple pipes in one command. (10)
+    // 	//BONUS POINT (NOT REQUIRED): Support multiple pipes in one command. (10)
     	
 	return;
 }
@@ -153,25 +197,8 @@ void handle_input(char* input) {
 		2. run appropriate command
 	*/
 
-	// const char* space = " "; // token to be identified
-	// char* token; 
-
-	// printf("starting token reading\n");
-	
-	// token = strtok(input, space);
-	// while(token != NULL) {
-	// 	printf( " %s\n", token);
-	// 	token = strtok(input, space);
-	// }
-
 	const char s[2] = " ";
 	char* token;
-	int i = 0;
-	int j = 0;
-	char *argv[3];
-	argv[0] = "";
-	argv[1] = "";
-	argv[2] = NULL;
 
 	/* get the first token */
 	token = strtok(input, s);
@@ -182,20 +209,19 @@ void handle_input(char* input) {
 			cd_cmd(strtok(NULL, s)); // parameter is grabbing an argument(if there is any)
 			return;
 		} else if (!strcmp("exit", token) || !strcmp("quit", token)) {
+			printf("exiting current scope\n");
 			exit(0);
-		} else { // an executable
-
-			// NEED TO CREATE CHILD PROCESS / FORK
-
-			// do the ls command ?? or the uname?? is there a generic one we will use?
-			int ret = execlp(token, token, strtok(NULL, s), strtok(NULL, s), NULL);
-			if(ret == -1) {
-				printf("execlp error");
-			}
+		} else { // an executable (ls, uname, etc)
+			execute_cmd(input);
 			return;
+			// int ret = execlp(token, token, strtok(NULL, s), strtok(NULL, s), NULL);
+			// if(ret == -1) {
+			// 	printf("execlp error");
+			// }
+			// return;
 		}
-		token = strtok(NULL, s);
-		i++;
+		// token = strtok(NULL, s);
+		// i++;
 	}
 
 	// int is_quit = strcmp("quit", input);
