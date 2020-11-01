@@ -123,14 +123,15 @@ void execute_cmd(char* input)
 	token = strtok(input, s); //first command before a space
 
 	char command[100];
+	const char* options[3];
 	int i = 0;
 
 	//parse / gather commands -- this is assuming there is no | (pipe)
-	// while(token != NULL) {
-	// 	command[i] = token;
-	// 	token = strtok(NULL, s);
-	// 	i++;
-	// }
+	while(token != NULL) {
+		options[i] = token;
+		token = strtok(NULL, s);
+		i++;
+	}
 	
 	// for(int i = 0; i < 100; i++) {
 	// 	for (int j = 0; j < 100; j++)
@@ -140,8 +141,11 @@ void execute_cmd(char* input)
 		
 	// }
 
-	const char *options[2] = { "ls", "-la" };
-
+	for (int i = 0; i < 3; i++)
+	{
+		printf("%s", options[i]);
+	}
+	
 
 
 	// try to run the command
@@ -150,7 +154,7 @@ void execute_cmd(char* input)
 	pid = fork();
 	if(pid == 0) {
 		printf("running ls\n");
-		execlp(options[0],options[0],options[1], NULL);
+		execlp("ls", "ls", "-la", NULL);
 		exit(0);
 	}
 	else {
