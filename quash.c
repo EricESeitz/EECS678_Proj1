@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <pthread.h>
+#include <stdio.h>
 
 // System call includes
 #include <unistd.h>
@@ -21,11 +22,18 @@
 static char cmd_buffer[BMAX];
 static char *myargv[5];
 static int myargc = 0;
-
+static char* dir;
+static char* env;
 
 char c = '\0';
-char input = '\0';
+char input[100];
 int buff_chars = 0;
+
+struct Job {
+	char* cmd;
+	int id;
+	int pid;
+};
 
 //setting up myargv, myargc
 void init_command()
@@ -43,11 +51,11 @@ void read_txt(char c)
 	init_command();
 	char *buf_ptr;
 	//This fills the cmd_buffer with the command from the .txt file
-	while ((input != '\n'))
-	{
-		cmd_buffer[buff_chars++] = input;
-		input = getchar();
-	}
+	// while ((input != '\n'))
+	// {
+	// 	cmd_buffer[buff_chars++] = input;
+	// 	input = getchar();
+	// }
 	printf("cmd_buffer: %s", cmd_buffer);
 	printf("\n");
 	
@@ -65,7 +73,7 @@ void empty_cmd_buffer()
 void execute_cmd()
 {
 	//Let's try executing the code first
-	printf("execute cmd_buffer:%s \n", cmd_buffer);
+	printf("execute cmd_buffer: %s \n", cmd_buffer);
 	printf("\n");
 	
 	char program[100];
@@ -80,34 +88,66 @@ void execute_cmd()
 	return;
 }
 
-//The idea of this is to read each line of the .txt file individually, run the command, then look back on the txt file until it's empty
+void handle_input(char* input) {
+	/*
+		1. ensure valid input
+		2. run appropriate command
+	*/
+
+	int is_quit = strcmp("quit", input);
+	int is_exit = strcmp("exit", input);
+	int is_cd = strcmp("cd", input);
+
+	if(!is_quit || !is_exit) {
+		printf("exiting\n");
+		exit(0);
+	}
+	else if(!is_cd) {
+		printf("ran else");
+	}
+	// printf("handling\n");
+	// if(strcmp("quit", input) || strcmp("exit", input) ) {
+	// 	printf("QUIT found...\n");
+	// 	exit(0);
+	// }
+	// else {
+	// 	printf("not exiting");
+	// }
+
+
+	// int cmp = strcmp("quit", input);
+	// printf("The integer is: %d\n", cmp);
+
+}
+
 int main(int argc, char **argv, char **envp)
 {
-	printf("\nquash -> ");
 	while(1) {
-		input = getchar();
-		//printf("input main: %c", input);
-		//printf("\n");
-		//if it reaches the end of the file, break
-		if (input == EOF){
-		break;
-		}
-		//decide what to do with input
-		switch(input) {
-			case '\n':
-				printf("break n\n");
-				break;
-			case '\0':
-				printf("break 0\n");
-				break;
-			default:
-				read_txt(c);
-				//Here we should run what we get back from cmd_buffer
-				execute_cmd();
-				//empty the buffer after we're done
-				empty_cmd_buffer();
-				break;
-		}
+		printf("\nquash -> ");
+
+		fgets(input, sizeof(input), stdin);
+		input[strcspn(input, "\n")] = '\0'; // remove extra char fgets contributes
+		
+		handle_input(input);
+		
+		
+
+
+		// switch(input) {
+		// 	case '\n':
+		// 		printf("break n\n");
+		// 		break;
+		// 	case '\0':
+		// 		printf("break 0\n");
+		// 		break;
+		// 	default:
+		// 		read_txt(c);
+		// 		//Here we should run what we get back from cmd_buffer
+		// 		execute_cmd();
+		// 		//empty the buffer after we're done
+		// 		empty_cmd_buffer();
+		// 		break;
+		// }
 
 	}
 	printf("\n");

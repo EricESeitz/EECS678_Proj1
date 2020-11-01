@@ -1,0 +1,40 @@
+QUASH
+Project Features
+    - Should be able to run exectuables 
+        + system call some input to syscall to run an exectuable
+        + use fork() and exec()
+        + if no path is given for the executable, search the current enviorment variable PATH
+            . if no executable is found quash should print error message
+    - foreground and background executions
+        + '&' is used to indicate background executions (look into exec() background call)
+            . if command is running in background, should format a certain way
+            . if background command is finished, should let the user know a certain way
+    - any of the following commands should work in QUASH:   
+        + set
+            . set value of variable in the enviorment
+            . those variables are PATH and HOME
+            . child processes should inherit PATH and HOME variables
+                .. in C, various flavors of the exec system call allow you to pass the 
+                   environment to child processes
+        + cd
+            . change directory to some dir
+            . cd without any args change directory to HOME
+                .. chdir()
+        + quit
+        + exit
+        + jobs
+            . print all the currently running background processes in specific format
+    - I/O redirection
+        + < and > to redirect input and output
+        + got to do some complicated stuff with input and output to / from files
+    - pipe command | should work 
+
+
+QUESTIONS:
+    - when do I make a fork and when do I do exec?
+
+
+possible commands:
+
+"cd"
+"quit" or "exit"
