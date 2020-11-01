@@ -232,8 +232,8 @@ void handle_input(char* input) {
 	char* token;
 	
 	//Checking for special cases
-	char* is_backgrd = strchr(orig_input, '&');
-	char* is_pipe = strchr(orig_input, '|');
+	char* background_proc = strchr(orig_input, '&');
+	char* pipe_proc = strchr(orig_input, '|');
 	char* filedir_in = strchr(orig_input, '<');
 	char* filedir_out = strchr(orig_input, '>');
 	char* kill_proc = strstr(orig_input, "kill");
@@ -243,8 +243,8 @@ void handle_input(char* input) {
 	char* quit_proc = strstr(orig_input, "quit");
 	//printf("orig_input: %s \n", orig_input);
 
-	printf("is_backgrd: %s \n", is_backgrd);
-	printf("is_pipe: %s \n", is_pipe);
+	printf("background_proc: %s \n", background_proc);
+	printf("pipe_proc: %s \n", pipe_proc);
 	printf("filedir_in: %s \n", filedir_in);
 	printf("filedir_out: %s \n", filedir_out);
 	printf("kill_proc: %s \n", kill_proc);
@@ -285,12 +285,31 @@ void handle_input(char* input) {
 			return;
 			//exit (0);
 		}
-		else if (is_backgrd != NULL) 
+		else if (background_proc != NULL) 
 		{
 			//**********************
 			//This will be where we will run background processes
+			char* bg_command = strdup(orig_input);
+    			bg_command[strlen(input) - 1] = 0;
+    			printf("bg_command: %s \n", bg_command);
+    			
+			pid_t pid;
+			pid_t sid; 
+			pid = fork();
+			if (pid == 0) {
+			    sid = setsid();
+			    if (sid < 0 ) {
+				printf("Error in making new process fork\n");
+				exit(0);
+			    }
+			    handle_input(bg_command);
+			    kill(getpid(), -9);
+			    exit(0);
+			}
+			
+			return;
 		}
-		else if (is_pipe != NULL) 
+		else if (pipe_proc != NULL) 
 		{
 			//Feature 11. Allow (1) pipe (|) (10)
 			//Also should allow multiple pipes?
