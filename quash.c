@@ -80,10 +80,11 @@ void exit_cmd()
 //the cd command will do... something, I guess. Maybe it effects the enviorment the code is running on?
 void cd_cmd(char* input)
 {
-	printf("in cd.. input is: %s\n", input);
+	// printf("in cd.. input is: %s\n", input);
 	if (input != NULL) {
         if (chdir(input) == -1) {
-        	printf("No such file or directory");
+        	printf("ERROR : No such file or directory");
+			return;
         }
         dir = getcwd(NULL, 1024);
 		printf("%s", dir);
@@ -167,6 +168,10 @@ void handle_input(char* input) {
 	char* token;
 	int i = 0;
 	int j = 0;
+	char *argv[3];
+	argv[0] = "";
+	argv[1] = "";
+	argv[2] = NULL;
 
 	/* get the first token */
 	token = strtok(input, s);
@@ -178,8 +183,13 @@ void handle_input(char* input) {
 			return;
 		} else if (!strcmp("exit", token) || !strcmp("quit", token)) {
 			exit(0);
-		} else if (!strcmp("ls", token)) { // can this be more generic to cover 
+		} else if (!strcmp("ls", token) || !strcmp("pwd", token)) { // can this be more generic to cover 
 			// do the ls command ?? or the uname?? is there a generic one we will use?
+			int ret = execlp(token, token, strtok(NULL, s), strtok(NULL, s), NULL);
+			if(ret == -1) {
+				printf("execlp error");
+			}
+			return;
 		} else {
 			printf("command not recognized");
 			return;
