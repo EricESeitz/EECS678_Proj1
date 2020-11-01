@@ -183,15 +183,15 @@ void handle_input(char* input) {
 			return;
 		} else if (!strcmp("exit", token) || !strcmp("quit", token)) {
 			exit(0);
-		} else if (!strcmp("ls", token) || !strcmp("pwd", token)) { // can this be more generic to cover 
+		} else { // an executable
+
+			// NEED TO CREATE CHILD PROCESS / FORK
+
 			// do the ls command ?? or the uname?? is there a generic one we will use?
 			int ret = execlp(token, token, strtok(NULL, s), strtok(NULL, s), NULL);
 			if(ret == -1) {
 				printf("execlp error");
 			}
-			return;
-		} else {
-			printf("command not recognized");
 			return;
 		}
 		token = strtok(NULL, s);
