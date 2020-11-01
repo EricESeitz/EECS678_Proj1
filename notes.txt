@@ -38,3 +38,6 @@ possible commands:
 
 "cd"
 "quit" or "exit"
+
+next step... handle cd
+    then handle cd ../

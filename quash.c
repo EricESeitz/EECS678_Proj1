@@ -63,14 +63,6 @@ void read_txt(char c)
 	
 }
 
-void empty_cmd_buffer()
-{
-	for (int i = 0; i < BMAX; i++)
-	{
-		cmd_buffer[i] = '\0';
-	}
-}
-
 //********************
 //Feature 4. exit and quit work properly (5
 //We might need special exit and quit functions to handle these later. These (I assume) can be called via the input.txt files
@@ -86,9 +78,19 @@ void exit_cmd()
 //********************
 //Feature 5. cd (with and without arguments) works properly (5)
 //the cd command will do... something, I guess. Maybe it effects the enviorment the code is running on?
-void cd_cmd()
+void cd_cmd(char* input)
 {
-
+	printf("in cd\n");
+	if (input != NULL) {
+        if (chdir(input) == -1) {
+        	printf("No such file or directory");
+        }
+        dir = getcwd(NULL, 1024);
+    } else {
+		printf("changed to home");
+      chdir(getenv("HOME"));
+      dir = getcwd(NULL, 1024);
+    }
 }
 
 //********************
@@ -148,17 +150,56 @@ void handle_input(char* input) {
 		2. run appropriate command
 	*/
 
-	int is_quit = strcmp("quit", input);
-	int is_exit = strcmp("exit", input);
-	int is_cd = strcmp("cd", input);
+	// const char* space = " "; // token to be identified
+	// char* token; 
 
-	if(!is_quit || !is_exit) {
-		printf("exiting\n");
-		exit(0);
+	// printf("starting token reading\n");
+	
+	// token = strtok(input, space);
+	// while(token != NULL) {
+	// 	printf( " %s\n", token);
+	// 	token = strtok(input, space);
+	// }
+
+	const char s[2] = " ";
+	char* token;
+	int i = 0;
+	int j = 0;
+
+	/* get the first token */
+	token = strtok(input, s);
+
+	/* walk through other tokens and choose our command */
+	while( token != NULL ) {
+		if(!strcmp("cd", token)) {
+			cd_cmd(strtok(NULL, s)); // parameter is grabbing an argument(if there is any)
+			return;
+		} else if (!strcmp("exit", token) || !strcmp("quit", token)) {
+			exit(0);
+		} else if (!strcmp("ls", token)) { // can this be more generic to cover 
+			// do the ls command ?? or the uname?? is there a generic one we will use?
+		} else {
+			printf("command not recognized");
+			return;
+		}
+		token = strtok(NULL, s);
+		i++;
 	}
-	else if(!is_cd) {
-		printf("ran else");
-	}
+
+	// int is_quit = strcmp("quit", input);
+	// int is_exit = strcmp("exit", input);
+	// int is_cd = strcmp("cd", input);
+
+	// if(!is_quit || !is_exit) {
+	// 	printf("exiting\n");
+	// 	exit(0);
+	// }
+	// else if(!is_cd) {
+	// 	cd_cmd(input);
+	// }
+	// else {
+	// 	printf("Command not recognized\n");
+	// }
 	// printf("handling\n");
 	// if(strcmp("quit", input) || strcmp("exit", input) ) {
 	// 	printf("QUIT found...\n");
@@ -180,9 +221,10 @@ int main(int argc, char **argv, char **envp)
 		printf("\nquash -> ");
 
 		fgets(input, sizeof(input), stdin);
-		input[strcspn(input, "\n")] = '\0'; // remove extra char fgets contributes
+		// input[strcspn(input, "\n")] = '\0'; // remove extra char fgets contributes
 		
-		handle_input(input);
+		// parse_input(input); // break the input into an array?
+		handle_input(input); // run the commands in the 2d array
 		
 		//Feature 3. set for HOME and PATH work properly (5)
 		//PDF: In C, this is achieved by using the char**envp argument to main
