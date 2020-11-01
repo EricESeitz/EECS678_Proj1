@@ -187,9 +187,7 @@ void execute_cmd(char* input)
     // 	//********************
     // 	//Feature 7. Child processes inherit the environment (5)
     // 	//When we get to piping (which will probably happen here I assume), child inheritance will need to be built in.
-    	
-    // 	//Feature 11. Allow (1) pipe (|) (10)
-    // 	//This MIGHT end up being executed here along with the other child/parent stuff. 
+
     	
     // 	//BONUS POINT (NOT REQUIRED): Support multiple pipes in one command. (10)
     	
@@ -267,6 +265,25 @@ void handle_input(char* input) {
 		{
 			//**********************
 			//This will be where we set the path
+			printf("orig_input set_proc: %s \n", orig_input);
+			char* part = strtok(orig_input, "set \0");
+			//printf("part1: %s \n", part);
+			//part = strtok(NULL, "\0");
+			char* input_path = part;
+			//printf("part2: %s \n", part);
+			printf("input_path: %s \n", input_path);
+			
+			
+			char* setter = strtok(input_path, "=");
+			char* ptype = setter;
+			setter = strtok(NULL, "\0");
+			char* path = setter;
+			    
+			if ((setenv(ptype,path,1)) == - 1) {
+				printf("Error! Bad path or not set.\n");
+			}
+			return;
+			//exit (0);
 		}
 		else if (is_backgrd != NULL) 
 		{
@@ -275,6 +292,8 @@ void handle_input(char* input) {
 		}
 		else if (is_pipe != NULL) 
 		{
+			//Feature 11. Allow (1) pipe (|) (10)
+			//Also should allow multiple pipes?
 			//This will be where we pipe processes
 			char* part = strtok(orig_input, "|\0");
 			char* first_cmd = part;
