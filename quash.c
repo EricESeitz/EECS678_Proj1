@@ -123,7 +123,8 @@ void execute_cmd(char* input)
 	token = strtok(input, s); //first command before a space
 
 	char command[100];
-	char* options[3];
+	int ARRSIZE = 100;
+	char* options[100] = {NULL};
 	int i = 0;
 
 	//parse / gather commands -- this is assuming there is no | (pipe)
@@ -147,8 +148,13 @@ void execute_cmd(char* input)
 	int stat;
 	pid = fork();
 	if(pid == 0) {
-		printf("running ls\n");
-		execlp(options[0], options, NULL);
+		printf("if pid = 0\n");
+		//printf("opions[0]: %s \n", options[0]);
+		//printf("opions[1]: %s \n", options[1]);
+		//printf("opions[2]: %s \n", options[2]);
+		
+		//char* options2[] = {"ls", "-la", NULL};
+		execvp(options[0], options);
 		exit(0);
 	}
 	else {
@@ -195,22 +201,59 @@ void handle_input(char* input) {
 		2. run appropriate command
 	*/
 
+
+	char* orig_input;
+	//printf("input: %s \n", input);
+	
+	//strcpy(orig_input, input);
+	//memcpy( orig_input, input, sizeof( orig_input )  );
+	orig_input = strdup(input);
+	//printf("orig_input: %s \n", orig_input);
+	//sleep(1);
+	//char* check_input;
+	//destination_size = sizeof (check_input);
+	//printf("orig_input: %s \n", orig_input);
+	//strncpy(check_input, orig_input, destination_size);
+	
 	const char s[2] = " ";
 	char* token;
+	
+	//Checking for special cases
+	char* is_backgrd = strchr(orig_input, '&');
+	char* is_pipe = strchr(orig_input, '|');
+	char* filedir_in = strchr(orig_input, '<');
+	char* filedir_out = strchr(orig_input, '>');
+	char* kill_proc = strstr(orig_input, "kill");
+	char* cd_proc = strstr(orig_input, "cd");
+	char* exit_proc = strstr(orig_input, "exit");
+	char* quit_proc = strstr(orig_input, "quit");
+	//printf("orig_input: %s \n", orig_input);
 
+	printf("is_backgrd: %s \n", is_backgrd);
+	printf("is_pipe: %s \n", is_pipe);
+	printf("filedir_in: %s \n", filedir_in);
+	printf("filedir_out: %s \n", filedir_out);
+	printf("kill_proc: %s \n", kill_proc);
+	printf("cd: %s \n", cd_proc);
+	printf("exit_proc: %s \n", exit_proc);
+	printf("quit_proc: %s \n", quit_proc);
+	
+	//printf("orig_input1: %s \n", orig_input);
+	//Something is breaking "original input" here, before it passes in ls -la, after it's just la
 	/* get the first token */
 	token = strtok(input, s);
-
+	//printf("orig_input2: %s \n", orig_input);
 	/* walk through other tokens and choose our command */
 	while( token != NULL ) {
-		if(!strcmp("cd", token)) {
+		if(cd_proc != NULL) {
 			cd_cmd(strtok(NULL, s)); // parameter is grabbing an argument(if there is any)
 			return;
-		} else if (!strcmp("exit", token) || !strcmp("quit", token)) {
+		} else if (exit_proc != NULL || quit_proc != NULL) {
 			printf("exiting current scope\n");
 			exit(0);
 		} else { // an executable (ls, uname, etc)
-			execute_cmd(input);
+		        //printf("orig_input3: %s \n", orig_input);
+			execute_cmd(orig_input);
 			return;
 			// int ret = execlp(token, token, strtok(NULL, s), strtok(NULL, s), NULL);
 			// if(ret == -1) {
