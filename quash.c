@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 //max size of the command buffer (commands from input file)
 #define BMAX 100
@@ -195,6 +196,20 @@ void execute_cmd(char* input)
 	return;
 }
 
+//Removes any excess whitepsace (trims strings, basically) for the pipeing command
+//e.g if " cd | cd" is passed in, it returns "cd | cd"
+char* clean_str(char* str) {
+    char *end;
+
+    while (isspace(*str)) str++;
+    if (*str == 0) return str;
+    end = str + strlen(str) - 1;
+    while (end > str && isspace(*end)) end--;
+    *(end + 1) = 0;
+
+    return str;
+}
+
 void handle_input(char* input) {
 	/*
 		1. ensure valid input
@@ -224,6 +239,7 @@ void handle_input(char* input) {
 	char* filedir_in = strchr(orig_input, '<');
 	char* filedir_out = strchr(orig_input, '>');
 	char* kill_proc = strstr(orig_input, "kill");
+	char* set_proc = strstr(orig_input, "set");
 	char* cd_proc = strstr(orig_input, "cd");
 	char* exit_proc = strstr(orig_input, "exit");
 	char* quit_proc = strstr(orig_input, "quit");
@@ -234,7 +250,8 @@ void handle_input(char* input) {
 	printf("filedir_in: %s \n", filedir_in);
 	printf("filedir_out: %s \n", filedir_out);
 	printf("kill_proc: %s \n", kill_proc);
-	printf("cd: %s \n", cd_proc);
+	printf("set_proc: %s \n", set_proc);
+	printf("cd_proc: %s \n", cd_proc);
 	printf("exit_proc: %s \n", exit_proc);
 	printf("quit_proc: %s \n", quit_proc);
 	
@@ -245,13 +262,69 @@ void handle_input(char* input) {
 	//printf("orig_input2: %s \n", orig_input);
 	/* walk through other tokens and choose our command */
 	while( token != NULL ) {
-		if(cd_proc != NULL) {
+
+		if (set_proc != NULL) 
+		{
+			//**********************
+			//This will be where we set the path
+		}
+		else if (is_backgrd != NULL) 
+		{
+			//**********************
+			//This will be where we will run background processes
+		}
+		else if (is_pipe != NULL) 
+		{
+			//**********************
+			//This will be where we pipe processes
+			char* part = strtok(orig_input, "|\0");
+			char* first_cmd = part;
+			part = strtok(NULL, "\0");
+			char* second_cmd = part;
+			
+			printf ("first_cmd: %s \n", clean_str(first_cmd));
+			printf ("second_cmd: %s \n", clean_str(second_cmd));
+			//exit(0);
+			
+			int spipe[2];
+			//int status;
+			pipe(spipe);
+			pid_t pid;
+			pid_t pid2;
+			first_cmd = clean_str(first_cmd);
+			second_cmd = clean_str(second_cmd);
+			
+			pid = fork();
+			if (pid == 0) {
+			    dup2(spipe[1], STDOUT_FILENO);
+			    handle_input(first_cmd); //cleans whitespaces
+			    close(spipe[0]);
+			    close(spipe[1]);
+			    exit(0);
+			}
+			
+			pid2 = fork();
+			if (pid2 == 0) {
+			    dup2(spipe[0], STDIN_FILENO);
+			    handle_input(second_cmd); //cleans whitespaces
+			    close(spipe[0]);
+			    close(spipe[1]);
+			    exit(0);
+			}
+			exit(0);
+			
+		}
+		else if(cd_proc != NULL) {
 			cd_cmd(strtok(NULL, s)); // parameter is grabbing an argument(if there is any)
 			return;
-		} else if (exit_proc != NULL || quit_proc != NULL) {
+		} 
+		else if (exit_proc != NULL || quit_proc != NULL) 
+		{
 			printf("exiting current scope\n");
 			exit(0);
-		} else { // an executable (ls, uname, etc)
+		}  
+		else 
+		{ // an executable (ls, uname, etc)
 		        //printf("orig_input3: %s \n", orig_input);
 			execute_cmd(orig_input);
 			return;
