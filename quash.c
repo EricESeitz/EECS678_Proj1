@@ -30,11 +30,6 @@ char c = '\0';
 char input[100];
 int buff_chars = 0;
 
-struct Job {
-	char* cmd;
-	int id;
-	int pid;
-};
 
 //setting up myargv, myargc
 void init_command()
@@ -59,7 +54,7 @@ void read_txt(char c)
 	// 	cmd_buffer[buff_chars++] = input;
 	// 	input = getchar();
 	// }
-	printf("cmd_buffer: %s", cmd_buffer);
+	//printf("cmd_buffer: %s", cmd_buffer);
 	printf("\n");
 	
 }
@@ -69,7 +64,7 @@ void read_txt(char c)
 //the cd command will do... something, I guess. Maybe it effects the enviorment the code is running on?
 void cd_cmd(char* input)
 {
-	// printf("in cd.. input is: %s\n", input);
+	printf("in cd input is: %s\n", input);
 	if (input != NULL) {
         if (chdir(input) == -1) {
         	printf("ERROR : No such file or directory");
@@ -90,7 +85,7 @@ void cd_cmd(char* input)
 //Probably something best made for calling as needed, maybe going through the active commands and printing all labeled "background"?
 void print_report()
 {
-
+	//Not implemented
 }
 
 //********************
@@ -106,7 +101,7 @@ void kill_cmd()
 //Executes a list of commands, piping each to the next successively.
 void execute_cmd(char* input)
 {
-	printf("trying to execute a command\n");
+	//printf("trying to execute a command\n");
 	const char s[2] = " ";
 	char* token;
 	token = strtok(input, s); //first command before a space
@@ -118,7 +113,7 @@ void execute_cmd(char* input)
 
 	//parse / gather commands -- this is assuming there is no | (pipe)
 	while(token != NULL) {
-		printf("token is: %s\n", token);
+		//printf("token is: %s\n", token);
 		options[i] = token;
 		token = strtok(NULL, s);
 		i++;
@@ -137,7 +132,7 @@ void execute_cmd(char* input)
 	int stat;
 	pid = fork();
 	if(pid == 0) {
-		printf("if pid = 0\n");
+		//printf("if pid = 0\n");
 		//printf("opions[0]: %s \n", options[0]);
 		//printf("opions[1]: %s \n", options[1]);
 		//printf("opions[2]: %s \n", options[2]);
@@ -147,7 +142,7 @@ void execute_cmd(char* input)
 		exit(0);
 	}
 	else {
-		printf("else block\n");
+		//printf("else block\n");
 		waitpid(pid, &stat, 0);
 		if(stat == 1) {
 			fprintf(stderr, "%s\n", "ERROR : in execute_cmd()");
@@ -172,12 +167,6 @@ void execute_cmd(char* input)
 	// execve(args[0], args, env_args);
     // 	fprintf(stderr, "Error on execve!\n");
     	
-    // 	//********************
-    // 	//Feature 7. Child processes inherit the environment (5)
-    // 	//When we get to piping (which will probably happen here I assume), child inheritance will need to be built in.
-
-    	
-    // 	//BONUS POINT (NOT REQUIRED): Support multiple pipes in one command. (10)
     	
 	return;
 }
@@ -219,6 +208,18 @@ void handle_input(char* input) {
 	const char s[2] = " ";
 	char* token;
 	
+	char* args[20];
+	for (int i = 0; i < 20; i++) {
+        args[i] = NULL;
+    	}
+    	char* input_command = strtok(input, " ");
+    	int count = 0;
+    	while (input_command != NULL) {
+		args[count] = input_command;
+		input_command = strtok(NULL, " ");
+		count++;
+    	}
+	
 	//Checking for special cases
 	char* background_proc = strchr(orig_input, '&');
 	char* pipe_proc = strchr(orig_input, '|');
@@ -231,6 +232,7 @@ void handle_input(char* input) {
 	char* quit_proc = strstr(orig_input, "quit");
 	//printf("orig_input: %s \n", orig_input);
 
+	/*
 	printf("background_proc: %s \n", background_proc);
 	printf("pipe_proc: %s \n", pipe_proc);
 	printf("filedir_in: %s \n", filedir_in);
@@ -240,6 +242,7 @@ void handle_input(char* input) {
 	printf("cd_proc: %s \n", cd_proc);
 	printf("exit_proc: %s \n", exit_proc);
 	printf("quit_proc: %s \n", quit_proc);
+	*/
 	
 	//printf("orig_input1: %s \n", orig_input);
 	//Something is breaking "original input" here, before it passes in ls -la, after it's just la
@@ -248,24 +251,28 @@ void handle_input(char* input) {
 	//printf("orig_input2: %s \n", orig_input);
 	/* walk through other tokens and choose our command */
 	while( token != NULL ) {
-
+		//Feature 3. set for HOME and PATH work properly (5)
+		//Feature 6: PATH works properly. Give error messages when the executable is not found (10)	
 		if (set_proc != NULL) 
 		{
 			//**********************
 			//This will be where we set the path
-			printf("orig_input set_proc: %s \n", orig_input);
+			//printf("orig_input set_proc: %s \n", orig_input);
 			char* part = strtok(orig_input, "set \0");
 			//printf("part1: %s \n", part);
 			//part = strtok(NULL, "\0");
 			char* input_path = part;
 			//printf("part2: %s \n", part);
-			printf("input_path: %s \n", input_path);
+			//printf("input_path: %s \n", input_path);
 			
 			
 			char* setter = strtok(input_path, "=");
 			char* ptype = setter;
 			setter = strtok(NULL, "\0");
 			char* path = setter;
+			
+			printf("path: %s \n", path);
+			printf("ptype: %s \n", ptype);
 			    
 			if ((setenv(ptype,path,1)) == - 1) {
 				printf("Error! Bad path or not set.\n");
@@ -273,13 +280,15 @@ void handle_input(char* input) {
 			return;
 			//exit (0);
 		}
+		//Feature 8. Allow background/foreground execution (&) (5)
 		else if (background_proc != NULL) 
 		{
 			//**********************
 			//This will be where we will run background processes
 			char* bg_command = strdup(orig_input);
+			int status;
     			bg_command[strlen(input) - 1] = 0;
-    			printf("bg_command: %s \n", bg_command);
+    			//printf("bg_command: %s \n", bg_command);
     			
 			pid_t pid;
 			pid_t sid; 
@@ -294,6 +303,10 @@ void handle_input(char* input) {
 			    kill(getpid(), -9);
 			    exit(0);
 			}
+			else
+			{
+				waitpid(pid, &status, 0);
+			}
 			
 			return;
 		}
@@ -307,8 +320,8 @@ void handle_input(char* input) {
 			part = strtok(NULL, "\0");
 			char* second_cmd = part;
 			
-			printf ("first_cmd: %s \n", clean_str(first_cmd));
-			printf ("second_cmd: %s \n", clean_str(second_cmd));
+			//printf ("first_cmd: %s \n", clean_str(first_cmd));
+			//printf ("second_cmd: %s \n", clean_str(second_cmd));
 			//exit(0);
 			
 			int spipe[2];
@@ -339,16 +352,93 @@ void handle_input(char* input) {
 			exit(0);
 			
 		}
+		//Feature 10. Allow file redirection (> and <) (5)
+		//This seems simple enough, look for a > or < from the command line, anything listed after we can use as input or output, right?
 		else if(filedir_in != NULL) {
 			//For file redirection, input
+			char* cmd_f_file = NULL;
+			size_t len = 0;
+			ssize_t read;
+			FILE* file_d;
+			int status;
+			pid_t pid;
+			pid = fork();
+			if (strcmp("quash", args[0]) == 0) {
+			    file_d = fopen(args[2], "r");
+			    do {
+				read = getline(&cmd_f_file, &len, file_d);
+				if (pid == 0) {
+				    handle_input(clean_str(cmd_f_file));
+				} else {
+				    waitpid(pid, &status, 0);
+				    if(status == 1) {
+				        printf("Pipe error in filedir_in \n");
+				    }
+				}
+			    } while (read != -1);
+			    fclose(file_d);
+			} else {
+			    file_d = fopen(args[2], "r");
+			    int j = 0;
+			    int position = 0;
+			    while (position == 0) {
+				if (strcmp("<",args[j]) == 0) {
+				    position = j;
+				}
+				j++;
+			    }
+			    while ((read = getline(&cmd_f_file, &len, file_d)) == -1) {
+				char* temp_i = strtok(cmd_f_file, " \0");
+				args[j] = temp_i;
+				j++;
+				//printf("%s\n",args[x]);
+			    }
+			    if (pid == 0) {
+				execute_cmd(args);
+			    }
+			    else
+				{
+					waitpid(pid, &status, 0);
+				}
+			    }
+			
 			return;
 		}
 		else if(filedir_out != NULL) {
 			//For file redirection, output
+			int i = 0;
+			int position = 0;
+			int fout = 0;
+			while (position == 0) {
+			    if (strcmp(">",args[i]) == 0) {
+				position = i;
+			    }
+			    i++;
+			}
+			//printf("Position: %c \n", position);
+			int status;
+			pid_t pid;
+			pid = fork();
+			if (pid == 0) {
+			    char* filename = args[position + 1];
+			    //printf("filename: %s \n", filename);
+			    fout = open(filename, O_WRONLY);
+			    dup2(fout, STDOUT_FILENO);
+			    char* n_input = strtok(input, ">");
+			    handle_input(clean_str(n_input));
+			    close(fout);
+			    exit(0);
+			}
+			else
+			{
+				waitpid(pid, &status, 0);
+			}
 			return;
 		}
 		else if(cd_proc != NULL) {
-			cd_cmd(strtok(NULL, s)); // parameter is grabbing an argument(if there is any)
+			//printf("cd_proc: %s \n", strtok(NULL, s)); 
+			//printf("args[1]: %s \n", args[1]);
+			cd_cmd(args[1]); // parameter is grabbing an argument(if there is any)
 			return;
 		} 
 		//Feature 4. exit and quit work properly (5)
@@ -412,20 +502,7 @@ int main(int argc, char **argv, char **envp)
 		// parse_input(input); // break the input into an array?
 		handle_input(input); // run the commands in the 2d array
 		
-		//Feature 3. set for HOME and PATH work properly (5)
-		//PDF: In C, this is achieved by using the char**envp argument to main
-		//PDF: The command ‘set PATH=/usr/bin:/bin’ in quash should set the variable PATH to contain two directories, /usr/bin and /bin.
-		//Maybe we need a global PATH and HOME class that can be modified here and read elsewhere?
-		
-		//Feature 6: PATH works properly. Give error messages when the executable is not found (10)
-		//We can work this in with the PATH and HOME classes, maybe?
-		
-		//Feature 8. Allow background/foreground execution (&) (5)
-		//I think we'll need some special cases here, or maybe we make a "command" class that can store a foreground/background flag along with other useful things?
-		//We can make a class store the command as a string then call on that string as needed maybe
-		
-		//Feature 10. Allow file redirection (> and <) (5)
-		//This seems simple enough, look for a > or < from the command line, anything listed after we can use as input or output, right?
+	
 
 
 		// 	printf("\nquash -> ");
