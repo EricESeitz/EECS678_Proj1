@@ -19,7 +19,7 @@
 #include <ctype.h>
 
 //max size of the command buffer (commands from input file)
-#define BMAX 100
+#define BMAX 1000
 static char cmd_buffer[BMAX];
 static char *myargv[5];
 static int myargc = 0;
@@ -64,7 +64,7 @@ void read_txt(char c)
 //the cd command will do... something, I guess. Maybe it effects the enviorment the code is running on?
 void cd_cmd(char* input)
 {
-	printf("in cd input is: %s\n", input);
+	//printf("in cd input is: %s\n", input);
 	if (input != NULL) {
         if (chdir(input) == -1) {
         	printf("ERROR : No such file or directory");
@@ -98,17 +98,19 @@ void kill_cmd()
 
 }
 
+
 //Executes a list of commands, piping each to the next successively.
 void execute_cmd(char* input)
 {
+	//printf("input: %s \n", input);
 	//printf("trying to execute a command\n");
 	const char s[2] = " ";
 	char* token;
 	token = strtok(input, s); //first command before a space
 
-	char command[100];
-	int ARRSIZE = 100;
-	char* options[100] = {NULL};
+	char command[1000];
+	int ARRSIZE = 1000;
+	char* options[1000] = {NULL};
 	int i = 0;
 
 	//parse / gather commands -- this is assuming there is no | (pipe)
@@ -129,7 +131,7 @@ void execute_cmd(char* input)
 
 	// try to run the command
 	pid_t pid;
-	int stat;
+	int status;
 	pid = fork();
 	if(pid == 0) {
 		//printf("if pid = 0\n");
@@ -137,14 +139,22 @@ void execute_cmd(char* input)
 		//printf("opions[1]: %s \n", options[1]);
 		//printf("opions[2]: %s \n", options[2]);
 		
-		//char* options2[] = {"ls", "-la", NULL};
-		execvp(options[0], options);
-		exit(0);
-	}
+		if (strlen(options[0]) > 0) {
+		    if (execvp(options[0], options) < 0) {
+		        fprintf(stderr, "invalid command\n");
+		        exit(0);
+		    }
+		} else {
+		    if (execvp(options[0], options) < 0) {
+		        fprintf(stderr, "invalid command\n");
+		        exit(0);
+		    }
+		}
+	    }
 	else {
 		//printf("else block\n");
-		waitpid(pid, &stat, 0);
-		if(stat == 1) {
+		waitpid(pid, &status, 0);
+		if(status == 1) {
 			fprintf(stderr, "%s\n", "ERROR : in execute_cmd()");
 		}
 	}
@@ -185,6 +195,33 @@ char* clean_str(char* str) {
     return str;
 }
 
+void set_path_home(char* input)
+{
+			//**********************
+			//This will be where we set the path
+			//printf("set_path_home: %s \n", input);
+			char* part = strtok(input, "set \0");
+			//printf("part1: %s \n", part);
+			//part = strtok(NULL, "\0");
+			char* input_path = part;
+			//printf("part2: %s \n", part);
+			//printf("input_path: %s \n", input_path);
+			
+			
+			char* setter = strtok(input_path, "=");
+			char* ptype = setter;
+			setter = strtok(NULL, "\0");
+			char* path = setter;
+			
+			//printf("path: %s \n", path);
+			//printf("ptype: %s \n", ptype);
+			    
+			if ((setenv(ptype,path,1)) == - 1) {
+				printf("Error! Bad path or not set.\n");
+			}
+			return;
+}
+
 void handle_input(char* input) {
 	/*
 		1. ensure valid input
@@ -208,8 +245,8 @@ void handle_input(char* input) {
 	const char s[2] = " ";
 	char* token;
 	
-	char* args[20];
-	for (int i = 0; i < 20; i++) {
+	char* args[200];
+	for (int i = 0; i < 200; i++) {
         args[i] = NULL;
     	}
     	char* input_command = strtok(input, " ");
@@ -255,28 +292,8 @@ void handle_input(char* input) {
 		//Feature 6: PATH works properly. Give error messages when the executable is not found (10)	
 		if (set_proc != NULL) 
 		{
-			//**********************
-			//This will be where we set the path
-			//printf("orig_input set_proc: %s \n", orig_input);
-			char* part = strtok(orig_input, "set \0");
-			//printf("part1: %s \n", part);
-			//part = strtok(NULL, "\0");
-			char* input_path = part;
-			//printf("part2: %s \n", part);
-			//printf("input_path: %s \n", input_path);
-			
-			
-			char* setter = strtok(input_path, "=");
-			char* ptype = setter;
-			setter = strtok(NULL, "\0");
-			char* path = setter;
-			
-			printf("path: %s \n", path);
-			printf("ptype: %s \n", ptype);
-			    
-			if ((setenv(ptype,path,1)) == - 1) {
-				printf("Error! Bad path or not set.\n");
-			}
+			//printf("orig_input: %s \n", orig_input);
+			set_path_home(orig_input);
 			return;
 			//exit (0);
 		}
@@ -354,54 +371,77 @@ void handle_input(char* input) {
 		}
 		//Feature 10. Allow file redirection (> and <) (5)
 		//This seems simple enough, look for a > or < from the command line, anything listed after we can use as input or output, right?
+		//This just isn't working anymore, something broke the code but I can't figure out what it is
 		else if(filedir_in != NULL) {
 			//For file redirection, input
-			char* cmd_f_file = NULL;
-			size_t len = 0;
-			ssize_t read;
-			FILE* file_d;
-			int status;
-			pid_t pid;
-			pid = fork();
-			if (strcmp("quash", args[0]) == 0) {
-			    file_d = fopen(args[2], "r");
-			    do {
-				read = getline(&cmd_f_file, &len, file_d);
-				if (pid == 0) {
-				    handle_input(clean_str(cmd_f_file));
-				} else {
-				    waitpid(pid, &status, 0);
-				    if(status == 1) {
-				        printf("Pipe error in filedir_in \n");
-				    }
-				}
-			    } while (read != -1);
-			    fclose(file_d);
-			} else {
-			    file_d = fopen(args[2], "r");
+			//char* cmd_f_file = NULL;
+			//ssize_t read = 0;
+			//FILE* file_d;
+			//int status;
+			//pid_t pid;
+			//pid = fork();
+
+			
+			    //printf("Opening file \n");
+			    //file_d = fopen(args[2], "r");
 			    int j = 0;
 			    int position = 0;
+			    //printf("Find position \n");
 			    while (position == 0) {
 				if (strcmp("<",args[j]) == 0) {
 				    position = j;
 				}
 				j++;
 			    }
+			    /*
+			    printf("Read: %ld \n", read);
+			    printf("getline: %ld \n", getline(&cmd_f_file, &len, file_d));
 			    while ((read = getline(&cmd_f_file, &len, file_d)) == -1) {
+			   	//printf("Read: %ld \n", read);
 				char* temp_i = strtok(cmd_f_file, " \0");
 				args[j] = temp_i;
 				j++;
-				//printf("%s\n",args[x]);
+				printf("args: %s\n", args[j]);
 			    }
-			    if (pid == 0) {
-				execute_cmd(args);
-			    }
-			    else
+			    */
+			    
+			    char line[100][100];
+			    char* fname;
+			    FILE *fptr = NULL; 
+			    int i_1 = 0;
+			    int tot = 0;
+			    //printf("args[2]: %s \n", args[2]);
+		            fname = args[2];
+
+			    fptr = fopen(fname, "r");
+			    while(fgets(line[i_1], 100, fptr)) 
 				{
-					waitpid(pid, &status, 0);
-				}
+				line[i_1][strlen(line[i_1]) - 1] = '\0';
+				i_1++;
 			    }
-			
+			    tot = i_1;
+			    //printf("\n The content of the file %s  are : \n",fname);    
+			    for(i_1 = 0; i_1 < tot; ++i_1)
+			    {
+				//printf(" %s\n", line[i_1]);
+				args[j] = line[i_1];
+				//printf("args: %s\n", args[j]);
+				execute_cmd(args[j]);
+				j++;
+
+			    }
+			    
+			    //if (pid == 0) {
+			    	//printf("args: %s \n",args[0]);
+			    	//printf("args: %s \n",args[1]);
+			    	//printf("args: %s \n",args[2]);
+				execute_cmd(args[2]);
+			   // }
+			    //else
+				//{
+				//	waitpid(pid, &status, 0);
+				//}
+			  		
 			return;
 		}
 		else if(filedir_out != NULL) {
@@ -498,7 +538,7 @@ int main(int argc, char **argv, char **envp)
 
 		fgets(input, sizeof(input), stdin);
 		input[strcspn(input, "\n")] = '\0'; // remove extra char fgets contributes
-		
+		printf("%s\n", input);
 		// parse_input(input); // break the input into an array?
 		handle_input(input); // run the commands in the 2d array
 		
